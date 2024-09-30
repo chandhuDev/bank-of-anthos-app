@@ -1,5 +1,5 @@
 # Use an official Maven image to build the application
-FROM maven:3.8.6-openjdk-11 AS build
+FROM maven:3.8.8-openjdk-17 AS build
 
 # Set the working directory inside the container
 WORKDIR /build
@@ -8,12 +8,12 @@ WORKDIR /build
 COPY pom.xml .
 RUN mvn dependency:go-offline
 
-# Copy the source code and build the application
+ # Copy the source code and build the application
 COPY src ./src
 RUN mvn package -DskipTests
 
 # Use an official OpenJDK runtime as a base image
-FROM openjdk:11-jre-slim
+FROM openjdk:17-jre-slim
 
 # Set the working directory inside the container
 WORKDIR /app
