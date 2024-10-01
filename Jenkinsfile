@@ -3,9 +3,9 @@ def services = [
         [path: 'app/accounts/contacts', image: 'boa-contacts:v0'],
         [path: 'app/accounts/userservice', image: 'boa-userservice:v0'],
         [path: 'app/frontend', image: 'boa-frontend:v0'],
+        [path: 'app/ledger/balancereader', image: 'boa-balancereader:v0'],
         [path: 'app/ledger/ledger-db', image: 'boa-ledgerdb:v0'],
         [path: 'app/ledger/ledgerwriter', image: 'boa-ledgerwriter:v0'],
-        [path: 'app/ledger/balancereader', image: 'boa-balancereader:v0'],
         [path: 'app/ledger/transactionhistory', image: 'boa-transactionhistory:v0'],
         [path: 'app/loadgenerator', image: 'boa-loadgenerator:v0'],
 ]

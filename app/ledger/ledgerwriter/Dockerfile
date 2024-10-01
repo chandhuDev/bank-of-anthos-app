@@ -10,7 +10,7 @@ RUN mvn dependency:go-offline
 
 # Copy the source code and build the application
 COPY src ./src
- RUN mvn package -DskipTests
+RUN mvn package -DskipTests
 
 # Use an official OpenJDK runtime as a base image
 FROM eclipse-temurin:17-jre-alpine
