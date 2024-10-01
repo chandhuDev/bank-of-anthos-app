@@ -10,18 +10,17 @@ def services = [
         [path: 'app/loadgenerator', image: 'boa-loadgenerator:v0'],
 ]
 def builtImages = []
+
 pipeline {
     agent any
     tools {
         jdk "jdk17"
-        maven 'maven' 
-        
+        maven 'maven'
     }
     environment {
         SUCCESS = 'SUCCESS'
         sonar = tool 'sonar'
         SONAR_AUTH_TOKEN = 'sonar-cred'
-        STAGE_TEST_RESULT = 'FAILURE'
     }
 
     parameters {
@@ -36,56 +35,48 @@ pipeline {
                         service.image = service.image.replace('v0', "v0.${BUILD_NUMBER}")
                     }
                 }
-                git branch: 'master',  url: 'https://github.com/chandhuDev/bank-of-anthos-app.git'
+                git branch: 'master', url: 'https://github.com/chandhuDev/bank-of-anthos-app.git'
             }
         }
+
         stage('SonarQube Check') {
             when {
-                not {
-                    expression { currentBuild.previousBuild?.result == 'SUCCESS' }
+                expression {
+                    return !currentBuild.previousBuild?.result?.equals('SUCCESS')
                 }
             }
             steps {
-               script {
-                    withSonarQubeEnv('sonar') {
-                        services.each { service ->
-                            echo "Running SonarQube analysis for ${service.path}..."
-                            dir("${service.path}") {
-                                if (fileExists('pom.xml')) {
-                                    echo "Detected Java project in ${service.path}, running SonarQube analysis with Maven..."
-                                    sh "mvn clean verify && mvn clean install"
-                                    sh "mvn clean package && mvn sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN}"
-                                } else if (fileExists('requirements.txt')) {
-                                    echo "Detected Python project in ${service.path}, running SonarQube analysis with sonar-scanner..."
-                                    sh """
-                                    ${sonar}/bin/sonar-scanner \
-                                    -Dsonar.projectKey=jenkins \
-                                    -Dsonar.sources=. \
-                                    """
-                                } else {
-                                    echo "No recognized project type in ${service.path}, skipping SonarQube analysis."
+                script {
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        withSonarQubeEnv('sonar') {
+                            services.each { service ->
+                                echo "Running SonarQube analysis for ${service.path}..."
+                                dir("${service.path}") {
+                                    if (fileExists('pom.xml')) {
+                                        echo "Detected Java project in ${service.path}, running SonarQube analysis with Maven..."
+                                        sh "mvn clean verify && mvn clean install"
+                                        sh "mvn clean package && mvn sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN}"
+                                    } else if (fileExists('requirements.txt')) {
+                                        echo "Detected Python project in ${service.path}, running SonarQube analysis with sonar-scanner..."
+                                        sh """
+                                        ${sonar}/bin/sonar-scanner \
+                                        -Dsonar.projectKey=jenkins \
+                                        -Dsonar.sources=. \
+                                        """
+                                    } else {
+                                        echo "No recognized project type in ${service.path}, skipping SonarQube analysis."
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-            post {
-                success {
-                    script {
-                        env.STAGE_TEST_RESULT = 'SUCCESS'
-                    }
-                }
-                failure {
-                    script {
-                        env.STAGE_TEST_RESULT = 'FAILURE'
-                    }
-                }
-            }
         }
+
         stage('Build Docker images') {
             when {
-                expression { currentBuild.previousBuild?.result == 'SUCCESS' }
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
             steps {
                 echo "in docker folder"
@@ -95,7 +86,6 @@ pipeline {
 
                     script {
                         def forceFullBuild = params.FULL_BUILD
-
                         services.each { item ->
                             if (forceFullBuild) {
                                 echo "Full build requested, building image ${item.image}..."
@@ -121,22 +111,11 @@ pipeline {
                     }
                 }
             }
-            post {
-                success {
-                    script {
-                        env.STAGE_TEST_RESULT = 'SUCCESS'
-                    }
-                }
-                failure {
-                    script {
-                        env.STAGE_TEST_RESULT = 'FAILURE'
-                    }
-                }
-            }
         }
+
         stage('Trivy Check') {
             when {
-                expression { currentBuild.previousBuild?.result == 'SUCCESS' }
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
             steps {
                 script {
@@ -149,4 +128,16 @@ pipeline {
             }
         }
     }
+}
+
+def hasPreviousSonarSuccess() {
+    def prevBuild = currentBuild.previousBuild
+    if (prevBuild != null && prevBuild.result == 'SUCCESS') {
+        def sonarStage = prevBuild.rawBuild.getAction(hudson.tasks.junit.TestResultAction)
+        if (sonarStage != null && sonarStage.getResult() == 'SUCCESS') {
+            echo "Previous SonarQube analysis was successful, skipping this stage."
+            return true
+        }
+    }
+    return false
 }
