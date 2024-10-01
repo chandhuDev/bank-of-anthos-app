@@ -25,4 +25,4 @@ COPY --from=build /build/target/transactionhistory.jar ./transactionhistory.jar
 EXPOSE 8080
 
 # Run the application
-CMD ["java", "-jar", "balancereader.jar"]
+CMD ["java", "-jar", "transactionhistory.jar"]
