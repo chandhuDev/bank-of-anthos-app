@@ -19,7 +19,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # Copy the jar file from the build stage
-COPY --from=build /build/target/ledgewriter.jar ./ledgewriter.jar
+COPY --from=build /build/target/ledgerwriter-1.0.jar ./ledgewriter.jar
 
 # Expose the necessary port
 EXPOSE 8080

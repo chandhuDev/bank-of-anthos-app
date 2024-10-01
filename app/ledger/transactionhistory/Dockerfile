@@ -19,7 +19,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # Copy the jar file from the build stage
-COPY --from=build /build/target/transactionhistory.jar ./transactionhistory.jar
+COPY --from=build /build/target/transactionhistory-1.0.jar ./transactionhistory.jar
 
 # Expose the necessary port
 EXPOSE 8080

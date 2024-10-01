@@ -19,7 +19,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # Copy the jar file from the build stage
-COPY --from=build /build/balancereader.jar ./balancereader.jar
+COPY --from=build /build/target/balancereader-1.0.jar ./balancereader.jar
 
 # Expose the necessary port
 EXPOSE 8080
