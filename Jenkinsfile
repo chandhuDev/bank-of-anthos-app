@@ -122,22 +122,10 @@ pipeline {
                     builtImages.each { image ->
                         echo "${image}"
                         echo "Running Trivy scan on image: chandhudev0/${image}"
-                        sh "/usr/local/bin/trivy image --severity CRITICAL,HIGH --format template --template-output table --ignore-unfixed chandhudev0/${image}"
+                        sh "/usr/bin/trivy image --severity HIGH,CRITICAL --format json --output result.json --ignore-unfixed chandhudev0/${image}"
                     }
                 }
             }
         }
     }
-}
-
-def hasPreviousSonarSuccess() {
-    def prevBuild = currentBuild.previousBuild
-    if (prevBuild != null && prevBuild.result == 'SUCCESS') {
-        def sonarStage = prevBuild.rawBuild.getAction(hudson.tasks.junit.TestResultAction)
-        if (sonarStage != null && sonarStage.getResult() == 'SUCCESS') {
-            echo "Previous SonarQube analysis was successful, skipping this stage."
-            return true
-        }
-    }
-    return false
 }
